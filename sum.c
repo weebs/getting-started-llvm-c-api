@@ -36,7 +36,9 @@ int main(int argc, char const *argv[]) {
 
     LLVMExecutionEngineRef engine;
     error = NULL;
-    LLVMLinkInJIT();
+    // LLVMLinkInJIT();
+    LLVMInitializeNativeAsmPrinter();
+    LLVMInitializeNativeAsmParser();
     LLVMInitializeNativeTarget();
     if (LLVMCreateExecutionEngineForModule(&engine, mod, &error) != 0) {
         fprintf(stderr, "failed to create execution engine\n");
@@ -59,8 +61,11 @@ int main(int argc, char const *argv[]) {
         LLVMCreateGenericValueOfInt(LLVMInt32Type(), x, 0),
         LLVMCreateGenericValueOfInt(LLVMInt32Type(), y, 0)
     };
-    LLVMGenericValueRef res = LLVMRunFunction(engine, sum, 2, args);
-    printf("%d\n", (int)LLVMGenericValueToInt(res, 0));
+    int (*fn)(int, int) = (int (*)(int, int))LLVMGetFunctionAddress(engine, "sum");
+    // LLVMGenericValueRef res = LLVMRunFunction(engine, sum, 2, args);
+    // printf("%d\n", (int)LLVMGenericValueToInt(res, 0));
+    int result = fn(x, y);
+    printf("result = %d", result);
 
     // Write out bitcode to file
     if (LLVMWriteBitcodeToFile(mod, "sum.bc") != 0) {
